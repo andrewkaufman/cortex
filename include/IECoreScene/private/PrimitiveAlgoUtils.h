@@ -184,8 +184,8 @@ class SplitTask : public tbb::task
 	private:
 		typedef typename P::Ptr Ptr;
 	public:
-		SplitTask(const std::vector<T> &segments, typename P::Ptr primitive, const S& splitter, const std::string &primvarName, std::vector<Ptr> &outputPrimitives, size_t offset, size_t depth = 0)
-			: m_segments(segments), m_primitive(primitive), m_splitter(splitter), m_primvarName(primvarName), m_outputPrimitives( outputPrimitives ), m_offset(offset), m_depth(depth)
+		SplitTask(const std::vector<T> &segments, typename P::Ptr primitive, const S& splitter, const PrimitiveVariable &primitiveVariable, std::vector<Ptr> &outputPrimitives, size_t offset, size_t depth = 0)
+			: m_segments(segments), m_primitive(primitive), m_splitter(splitter), m_primitiveVariable(primitiveVariable), m_outputPrimitives( outputPrimitives ), m_offset(offset), m_depth(depth)
 		{
 		}
 
@@ -206,15 +206,13 @@ class SplitTask : public tbb::task
 			size_t offset = m_segments.size() / 2;
 			typename std::vector<T>::iterator mid = m_segments.begin() + offset;
 
-			IECoreScene::PrimitiveVariable segmentPrimVar = m_primitive->variables.find( m_primvarName )->second;
-
 			std::vector<T> lowerSegments (m_segments.begin(), mid);
 			std::vector<T> upperSegments (mid, m_segments.end());
 
 			std::set<T> lowerSegmentsSet ( m_segments.begin(), mid );
 			std::set<T> upperSegmentsSet (mid, m_segments.end());
 
-			const auto &readable = IECore::runTimeCast<IECore::TypedData<std::vector<T> > >( segmentPrimVar.data )->readable();
+			const auto &readable = IECore::runTimeCast<IECore::TypedData<std::vector<T> > >( m_primitiveVariable.data )->readable();
 
 			IECore::BoolVectorDataPtr deletionArrayLower = new IECore::BoolVectorData();
 			auto &writableLower = deletionArrayLower->writable();
@@ -223,9 +221,9 @@ class SplitTask : public tbb::task
 			auto &writableUpper = deletionArrayUpper->writable();
 
 			size_t deleteCount = 0;
-			if( segmentPrimVar.indices )
+			if( m_primitiveVariable.indices )
 			{
-				auto &readableIndices = segmentPrimVar.indices->readable();
+				auto &readableIndices = m_primitiveVariable.indices->readable();
 				writableLower.resize( readableIndices.size() );
 				writableUpper.resize( readableIndices.size() );
 
@@ -269,10 +267,10 @@ class SplitTask : public tbb::task
 
 			set_ref_count( 1 + numSplits);
 
-			SplitTask *tA = new( allocate_child() ) SplitTask( lowerSegments, a, m_splitter,  m_primvarName, m_outputPrimitives, m_offset, m_depth + 1);
+			SplitTask *tA = new( allocate_child() ) SplitTask( lowerSegments, a, m_splitter,  m_primitiveVariable, m_outputPrimitives, m_offset, m_depth + 1);
 			spawn( *tA );
 
-			SplitTask *tB = new( allocate_child() ) SplitTask( upperSegments, b, m_splitter, m_primvarName, m_outputPrimitives, m_offset + offset, m_depth + 1 );
+			SplitTask *tB = new( allocate_child() ) SplitTask( upperSegments, b, m_splitter, m_primitiveVariable, m_outputPrimitives, m_offset + offset, m_depth + 1 );
 			spawn( *tB );
 
 			wait_for_all();
@@ -285,7 +283,7 @@ class SplitTask : public tbb::task
 		std::vector<T> m_segments;
 		typename P::Ptr m_primitive;
 		const S &m_splitter;
-		std::string m_primvarName;
+		const PrimitiveVariable &m_primitiveVariable;
 		std::vector<Ptr> &m_outputPrimitives;
 		size_t m_offset;
 		size_t m_depth;
@@ -295,7 +293,7 @@ template<typename P, typename S>
 class TaskSegmenter
 {
 	public:
-		TaskSegmenter( const P *primitive, IECore::Data *data, const std::string &primVarName, S &splitter ) : m_primitive( primitive ), m_data( data ), m_primVarName( primVarName ), m_splitter(splitter)
+		TaskSegmenter( const P *primitive, IECore::Data *data, const PrimitiveVariable &primitiveVariable, S &splitter ) : m_primitive( primitive ), m_data( data ), m_primitiveVariable( primitiveVariable ), m_splitter(splitter)
 		{
 		}
 
@@ -329,7 +327,7 @@ class TaskSegmenter
 				segmentsReadable,
 				const_cast<P *>(m_primitive),
 				m_splitter,
-				m_primVarName,
+				m_primitiveVariable,
 				results,
 				0
 			);
@@ -349,7 +347,7 @@ class TaskSegmenter
 	private:
 		const P *m_primitive;
 		IECore::Data *m_data;
-		std::string m_primVarName;
+		const PrimitiveVariable &m_primitiveVariable;
 		const S &m_splitter;
 };
 

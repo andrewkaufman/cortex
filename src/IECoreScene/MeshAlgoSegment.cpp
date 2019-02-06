@@ -57,23 +57,9 @@ std::vector<MeshPrimitivePtr> IECoreScene::MeshAlgo::segment( const MeshPrimitiv
 		segmentValues = data.get();
 	}
 
-	std::string primitiveVariableName;
-	for (const auto &pv : mesh->variables )
-	{
-		if ( pv.second == primitiveVariable )
-		{
-			primitiveVariableName = pv.first;
-		}
-	}
-
-	if( primitiveVariableName == "" )
-	{
-		throw IECore::InvalidArgumentException( "IECoreScene::MeshAlgo::segment : Primitive variable not found on Mesh Primitive " );
-	}
-
 	auto f = MeshAlgo::deleteFaces;
 
-	IECoreScene::Detail::TaskSegmenter<IECoreScene::MeshPrimitive, decltype(f) > taskSegmenter( mesh, const_cast<IECore::Data*> (segmentValues), primitiveVariableName, f );
+	IECoreScene::Detail::TaskSegmenter<IECoreScene::MeshPrimitive, decltype(f) > taskSegmenter( mesh, const_cast<IECore::Data*> (segmentValues), primitiveVariable, f );
 
 	return dispatch( primitiveVariable.data.get(), taskSegmenter );
 }

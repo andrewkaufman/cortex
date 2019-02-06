@@ -59,22 +59,8 @@ std::vector<PointsPrimitivePtr> IECoreScene::PointsAlgo::segment(
 		segmentValues = data.get();
 	}
 
-	std::string primitiveVariableName;
-	for (const auto &pv : points->variables )
-	{
-		if ( pv.second == primitiveVariable )
-		{
-			primitiveVariableName = pv.first;
-		}
-	}
-
-	if( primitiveVariableName == "" )
-	{
-		throw IECore::InvalidArgumentException( "IECoreScene::PointsAlgo::segment : Primitive variable not found on Points Primitive" );
-	}
-
 	auto f = PointsAlgo::deletePoints;
-	IECoreScene::Detail::TaskSegmenter<IECoreScene::PointsPrimitive, decltype(f) > segmenter( points, const_cast<IECore::Data*> (segmentValues), primitiveVariableName, f);
+	IECoreScene::Detail::TaskSegmenter<IECoreScene::PointsPrimitive, decltype(f) > segmenter( points, const_cast<IECore::Data*> (segmentValues), primitiveVariable, f);
 
 	return dispatch( primitiveVariable.data.get(), segmenter );
 }

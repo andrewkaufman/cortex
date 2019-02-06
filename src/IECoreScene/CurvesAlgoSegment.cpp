@@ -57,24 +57,9 @@ std::vector<CurvesPrimitivePtr> IECoreScene::CurvesAlgo::segment( const CurvesPr
 		segmentValues = data.get();
 	}
 
-	std::string primitiveVariableName;
-	for (const auto &pv : curves->variables )
-	{
-		if ( pv.second == primitiveVariable )
-		{
-			primitiveVariableName = pv.first;
-		}
-	}
-
-	if( primitiveVariableName == "" )
-	{
-		throw IECore::InvalidArgumentException( "IECoreScene::CurvesAlgo::segment : Primitive variable not found CurvesPrimitive " );
-	}
-
-
 	auto f = CurvesAlgo::deleteCurves;
 
-	IECoreScene::Detail::TaskSegmenter<IECoreScene::CurvesPrimitive, decltype(f) > segmenter( curves, const_cast<IECore::Data*> ( segmentValues ), primitiveVariableName, f );
+	IECoreScene::Detail::TaskSegmenter<IECoreScene::CurvesPrimitive, decltype(f) > segmenter( curves, const_cast<IECore::Data*> ( segmentValues ), primitiveVariable, f );
 
 	return dispatch( primitiveVariable.data.get(), segmenter );
 }
