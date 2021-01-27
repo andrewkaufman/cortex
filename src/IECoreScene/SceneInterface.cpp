@@ -34,6 +34,8 @@
 
 #include "IECoreScene/SceneInterface.h"
 
+#include "IECore/SimpleTypedData.h"
+
 #include "boost/filesystem/convenience.hpp"
 #include "boost/tokenizer.hpp"
 #include "boost/algorithm/string.hpp"
@@ -100,24 +102,61 @@ std::vector<std::string> SceneInterface::supportedExtensions( IndexedIO::OpenMod
 	return extensions;
 }
 
-SceneInterfacePtr SceneInterface::create( const std::string &path, IndexedIO::OpenMode mode )
+SceneInterfacePtr SceneInterface::create( const CompoundData *args )
 {
-	SceneInterfacePtr result = nullptr;
+	const auto *extensionData = args->member<StringData>( "extension" );
+	const auto *fileNameData = args->member<StringData>( "fileName" );
+	const auto *openModeData = args->member<IntData>( "openMode" );
 
-	std::string extension = boost::filesystem::extension(path);
-	boost::algorithm::to_lower( extension );
-	IndexedIO::OpenModeFlags openMode = IndexedIO::OpenModeFlags( mode & (IndexedIO::Read|IndexedIO::Write|IndexedIO::Append) );
-	std::pair< std::string, IndexedIO::OpenModeFlags > key( extension, openMode );
-
-	const CreatorMap &createFns = fileCreators();
-
-	CreatorMap::const_iterator it = createFns.find(key);
-	if (it == createFns.end())
+	std::string extension;
+	if( extensionData )
 	{
-		throw IOException(path);
+		extension = extensionData->readable();
+	}
+	else if( fileNameData )
+	{
+		extension = boost::filesystem::extension( fileNameData->readable() );
+	}
+	else
+	{
+		throw InvalidArgumentException( R"(SceneInterface::create : Either "extension" or "fileName" must be specified.)" );
 	}
 
-	return (it->second)(path, mode);
+	IndexedIO::OpenMode openMode = IndexedIO::Read;
+	if( openModeData )
+	{
+		openMode = openModeData->readable();
+	}
+
+	SceneInterfacePtr result = nullptr;
+
+	boost::algorithm::to_lower( extension );
+	auto openModeFlags = IndexedIO::OpenModeFlags( openMode & (IndexedIO::Read|IndexedIO::Write|IndexedIO::Append) );
+
+	const CreatorMap &createFns = fileCreators();
+	auto it = createFns.find( { extension, openModeFlags } );
+	if( it == createFns.end() )
+	{
+		throw IOException(
+			boost::str(
+				boost::format(
+					R"(SceneInterface::create : No SceneInterfaces available for "%1"files in "%2" open-mode.)"
+				) % extension % openMode
+			)
+		);
+	}
+
+	return (it->second)( args );
+}
+
+SceneInterfacePtr SceneInterface::create( const std::string &path, IndexedIO::OpenMode mode )
+{
+	CompoundDataPtr argData = new CompoundData;
+	auto &args = argData->writable();
+	args["fileName"] = new StringData( path );
+	args["openMode"] = new IntData( mode );
+
+	return create( argData.get() );
 }
 
 SceneInterface::~SceneInterface()

@@ -45,6 +45,12 @@ SceneInterface::FileFormatDescription<T>::FileFormatDescription(const std::strin
 };
 
 template<class T>
+SceneInterfacePtr SceneInterface::FileFormatDescription<T>::creator( const IECore::CompoundData *args )
+{
+	return new T( args );
+}
+
+template<class T>
 SceneInterfacePtr SceneInterface::FileFormatDescription<T>::creator( const std::string &fileName, IECore::IndexedIO::OpenMode mode )
 {
 	return new T( fileName, mode );

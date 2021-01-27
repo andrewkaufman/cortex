@@ -210,6 +210,16 @@ static MurmurHash hashSet( SceneInterface &m, const SceneInterface::Name &name)
 	return h;
 }
 
+static SceneInterfacePtr createWrapper1( const CompoundDataPtr &args )
+{
+	return SceneInterface::create( args.get() );
+}
+
+static SceneInterfacePtr createWrapper2( const std::string &path, IECore::IndexedIO::OpenMode mode )
+{
+	return SceneInterface::create( path, mode );
+}
+
 void bindSceneInterface()
 {
 	SceneInterfacePtr (SceneInterface::*nonConstChild)(const SceneInterface::Name &, SceneInterface::MissingBehaviour) = &SceneInterface::child;
@@ -286,7 +296,9 @@ void bindSceneInterface()
 
 		.def( "pathToString", pathToString ).staticmethod("pathToString")
 		.def( "stringToPath", stringToPath ).staticmethod("stringToPath")
-		.def( "create", SceneInterface::create ).staticmethod( "create" )
+		.def( "create", createWrapper1 )
+		.def( "create", createWrapper2, ( arg( "path" ), arg( "mode" ) ) )
+		.staticmethod( "create" )
 		.def( "supportedExtensions", supportedExtensions, ( arg("modes") = IndexedIO::Read|IndexedIO::Write|IndexedIO::Append ) ).staticmethod( "supportedExtensions" )
 
 		.def_readonly("visibilityName", &SceneInterface::visibilityName )

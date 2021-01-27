@@ -113,6 +113,8 @@ class IECORESCENE_API SceneInterface : public IECore::RunTimeTyped
 		/// Name of the visibility attribute
 		static const Name &visibilityName;
 
+		/// Create an instance of a subclass based on the provided arguements
+		static SceneInterfacePtr create( const IECore::CompoundData *args );
 		/// Create an instance of a subclass which is able to open the file found at "path".
 		/// Files can be opened for Read, Write, or Append depending on the derived classes.
 		/// During "Read" operations it is not permitted to make any modifications to the underlying files.
@@ -136,6 +138,7 @@ class IECORESCENE_API SceneInterface : public IECore::RunTimeTyped
 				FileFormatDescription(const std::string &extension, IECore::IndexedIO::OpenMode modes);
 
 			private :
+				static SceneInterfacePtr creator( const IECore::CompoundData *args );
 				static SceneInterfacePtr creator( const std::string &fileName, IECore::IndexedIO::OpenMode mode );
 		};
 
@@ -292,7 +295,7 @@ class IECORESCENE_API SceneInterface : public IECore::RunTimeTyped
 
 	protected:
 
-		typedef SceneInterfacePtr (*CreatorFn)(const std::string &, IECore::IndexedIO::OpenMode );
+		typedef SceneInterfacePtr (*CreatorFn)( const IECore::CompoundData *args );
 		class CreatorMap;
 		static CreatorMap &fileCreators();
 		static void registerCreator( const std::string &extension, IECore::IndexedIO::OpenMode modes, CreatorFn f );
