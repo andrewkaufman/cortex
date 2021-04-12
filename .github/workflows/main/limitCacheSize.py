@@ -10,7 +10,7 @@ CacheEntry = collections.namedtuple( "CacheEntry", [ "file", "size", "mtime" ] )
 totalSize = 0
 cacheEntries = []
 
-for root, dirs, files in os.walk( "./sconsCache" ) :
+for root, dirs, files in os.walk( os.environ.get( "CORTEX_BUILD_CACHEDIR" ) ) :
 	for file in files :
 		fileName = os.path.join( root, file )
 		size = os.path.getsize( fileName )

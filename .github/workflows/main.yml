@@ -88,6 +88,9 @@ jobs:
 
     container: ${{ matrix.containerImage }}
 
+    env:
+      CORTEX_BUILD_CACHEDIR: "./sconsCache"
+
     steps:
 
     - uses: actions/checkout@v2
@@ -152,18 +155,18 @@ jobs:
     - name: Cache
       uses: actions/cache@v1
       with:
-        path: sconsCache
+        path: ${{ env.CORTEX_BUILD_CACHEDIR }}
         key: ${{ runner.os }}-${{ matrix.containerImage }}-${{env.CORTEX_DEPENDENCIES_HASH}}-${{ matrix.buildType }}-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-${{ matrix.containerImage }}-${{env.CORTEX_DEPENDENCIES_HASH}}-${{ matrix.buildType }}-
 
     - name: Build
       run: |
-       scons -j 2 install BUILD_TYPE=${{ matrix.buildType }} OPTIONS=${{ matrix.options }} CXXSTD=c++14 BUILD_CACHEDIR=sconsCache
+       scons -j 2 install BUILD_TYPE=${{ matrix.buildType }} OPTIONS=${{ matrix.options }} CXXSTD=c++14 BUILD_CACHEDIR=${{ env.CORTEX_BUILD_CACHEDIR }}
 
     - name: Test
       run: |
-        scons ${{ matrix.tests }} BUILD_TYPE=${{ matrix.buildType }} OPTIONS=${{ matrix.options }} CXXSTD=c++14 BUILD_CACHEDIR=sconsCache
+        scons ${{ matrix.tests }} BUILD_TYPE=${{ matrix.buildType }} OPTIONS=${{ matrix.options }} CXXSTD=c++14 BUILD_CACHEDIR=${{ env.CORTEX_BUILD_CACHEDIR }}
       env:
         IECORE_RTLD_GLOBAL: 0
       # We have some work to do before we can run the tests
