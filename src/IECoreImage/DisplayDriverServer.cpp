@@ -157,7 +157,7 @@ class DisplayDriverServer::PrivateData : public RefCounted
 			}
 			catch( std::exception &e )
 			{
-				throw IECore::IOException( std::string( "DisplayDriverServer : Unable to connect to port " ) + std::to_string( portNumber ) + " : " + e.what() );
+				throw IECore::IOException( std::string( "DisplayDriverServerFAKECHANGE : Unable to connect to port " ) + std::to_string( portNumber ) + " : " + e.what() );
 			}
 		}
 
