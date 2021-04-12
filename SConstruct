@@ -1039,6 +1039,12 @@ for e in env["ENV_VARS_TO_IMPORT"].split() :
 if "SAVE_OPTIONS" in ARGUMENTS :
 	o.Save( ARGUMENTS["SAVE_OPTIONS"], env )
 
+print( "CWD" )
+print( os.getcwd() )
+print( "SCONS CACHE DIR" )
+print( env["BUILD_CACHEDIR"] )
+print( glob.glob( os.path.join( env["BUILD_CACHEDIR"], '*', '*' ) ) )
+
 if env["BUILD_CACHEDIR"] != "" :
 	CacheDir( env["BUILD_CACHEDIR"] )
 
